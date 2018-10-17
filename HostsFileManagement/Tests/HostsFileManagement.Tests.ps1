@@ -455,7 +455,11 @@ $HostsData = @'
       $Entries += [HostsEntry]::new("1.2.3.5		plop             plop.powershelldistrict.com   ")
       
       $HostFile.ReadHostsFileContent()
-      $HostFile.RemoveHostsEntry($Entries)
+      $ToBeRemoved = @()
+      Foreach ( $Entry in $Entries ) {
+        $HostFile.entries | Where-Object { ($_.Ipaddress -eq $Entry.Ipaddress) -and ($_.EntryType -eq $Entry.EntryType) } | %{ $ToBeRemoved+=$_ }
+      }
+      $HostFile.RemoveHostsEntry($ToBeRemoved)
       
       $HostFile.GetEntries()
       
@@ -646,8 +650,12 @@ $HostsData = @'
       $EntriesToDelete += [HostsEntry]::new("1.2.3.7","dc01","dc01.powershelldistrict.com","",[HostsEntryType]::Entry)
       $EntriesToDelete += [HostsEntry]::new("1.2.3.5		plop             plop.powershelldistrict.com   ")
       
+      $ToBeRemoved = @()
+      Foreach ( $Entry in $EntriesToDelete ) {
+        $HostFile.entries | Where-Object { ($_.Ipaddress -eq $Entry.Ipaddress) -and ($_.EntryType -eq $Entry.EntryType) } | %{ $ToBeRemoved+=$_ }
+      }
       
-      $HostFile.RemoveHostsEntry($EntriesToDelete)
+      $HostFile.RemoveHostsEntry($ToBeRemoved)
   
       it "Should write file to disk using .Set() Method"{
           $HostFile.set()
