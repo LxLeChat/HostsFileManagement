@@ -16,12 +16,12 @@ Class HostsFile {
     ## Constructor that accepts a string (preferrably a computer name)
     HostsFile([String]$ComputerName){
     
-      If ( Test-Connection -ComputerName $ComputerName -Quiet -Count 2 ) {
+      #If ( Test-Connection -ComputerName $ComputerName -Quiet -Count 2 ) {
         $This.Path = "\\$Computername\admin$\System32\drivers\etc\hosts"
         $This.ComputerName = $Computername
-      } Else {
-        Throw "Could not reach the computer $($ComputerName)"
-      }
+      #} Else {
+      #  Throw "Could not reach the computer $($ComputerName)"
+      #}
 
     }
     

@@ -28,20 +28,64 @@ Function Get-HFMHostsfile {
     Param
     (
         [Alias("Name")]
-        [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
-        [String[]]$ComputerName
+        [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True,ParameterSetName='Set1')]
+        [String[]]$ComputerName,
+
+        [Alias("FullName")]
+        [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True,ParameterSetName='Set2')]
+        [System.IO.FileInfo[]]$Path,
+
+        [Switch]$NoComments
     )
 
     BEGIN{}
 
     PROCESS{
-        If ( !$ComputerName ) {
-            return [HostsFile]::New()
-        } Else {
-            Foreach ( $Computer in $ComputerName ) {
-                Return [HostsFile]::New($Computer)
+        Switch ( $PSCmdlet.ParameterSetName ) {
+
+            Set1 {
+
+                Foreach ( $Computer in $ComputerName ) {
+
+                    If ( Test-Connection -ComputerName $Computer -Quiet -Count 2 ) {
+                        $RemoteHostFile = [HostsFile]::New($Computer)
+                        $RemoteHostFile.ReadHostsFileContent()
+                        If ( $PSBoundParameters['ExcludeComments'] ) {
+                            return $($RemoteHostFile.GetEntries() | Where-ObJect EntryType -ne "Comment")
+                        } Else {
+                            return $RemoteHostFile.GetEntries()
+                        }
+                    } Else {
+                        Throw "Could not reach computer $($Computer)"
+                    }
+                }
+
             }
+            Set2 {
+
+                Foreach ( $P in $Path ) {
+                    If ($PSCmdlet.MyInvocation.ExpectingInput) {
+                        $ClassParams.Path = $P.FullName
+                    } Else {
+                        $ClassParams.Path = (Get-Item (Resolve-Path $P).Path).FullName
+                    }
+                }
+
+            }
+            Default {
+
+                $LocalHostPath = [HostsFile]::New()
+                $LocalHostPath.ReadHostsFileContent()
+
+                If ( $PSBoundParameters['ExcludeComments'] ) {
+                    return $($LocalHostPath.GetEntries() | Where-ObJect EntryType -ne "Comment")
+                } Else {
+                    return $LocalHostPath.GetEntries()
+                }
+            }
+
         }
+
     }
 
     END{}
