@@ -24,7 +24,7 @@ Function Get-HFMHostsfile {
         Visit his site, and read his article a boute pratical use of PowerShell Classes: http://powershelldistrict.com/powershell-class/
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='Set0')]
     Param
     (
         [Alias("Name")]
@@ -35,13 +35,25 @@ Function Get-HFMHostsfile {
         [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True,ParameterSetName='Set2')]
         [System.IO.FileInfo[]]$Path,
 
-        [Switch]$NoComments
+        [Switch]$ExcludeComment
     )
 
     BEGIN{}
 
     PROCESS{
         Switch ( $PSCmdlet.ParameterSetName ) {
+
+            Set0 {
+
+                $LocalHostPath = [HostsFile]::New()
+                $LocalHostPath.ReadHostsFileContent()
+
+                If ( $PSBoundParameters['ExcludeComment'] ) {
+                    return $($LocalHostPath.GetEntries() | Where-ObJect EntryType -ne "Comment")
+                } Else {
+                    return $LocalHostPath.GetEntries()
+                }
+            }
 
             Set1 {
 
@@ -61,6 +73,7 @@ Function Get-HFMHostsfile {
                 }
 
             }
+
             Set2 {
 
                 Foreach ( $P in $Path ) {
@@ -71,17 +84,6 @@ Function Get-HFMHostsfile {
                     }
                 }
 
-            }
-            Default {
-
-                $LocalHostPath = [HostsFile]::New()
-                $LocalHostPath.ReadHostsFileContent()
-
-                If ( $PSBoundParameters['ExcludeComments'] ) {
-                    return $($LocalHostPath.GetEntries() | Where-ObJect EntryType -ne "Comment")
-                } Else {
-                    return $LocalHostPath.GetEntries()
-                }
             }
 
         }
