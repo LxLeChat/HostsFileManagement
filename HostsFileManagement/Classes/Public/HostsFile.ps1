@@ -7,15 +7,18 @@ Class HostsFile {
     
     ## Default Constructor
     HostsFile(){
-
-      $This.Path ="\\$ENV:Computername\admin$\System32\drivers\etc\hosts"
-      $This.ComputerName = $ENV:Computername
-
+      If ( $([BoxType]::New()).GetBoxType() -eq "Unix" ) {
+        $This.Path ="/etc/hosts"
+        $This.ComputerName = $ENV:Computername  
+      } Else {
+        $This.Path ="\\$ENV:Computername\admin$\System32\drivers\etc\hosts"
+        $This.ComputerName = $ENV:Computername
+      }
     }
     
     ## Constructor that accepts a string (preferrably a computer name)
     HostsFile([String]$ComputerName){
-    
+      
       #If ( Test-Connection -ComputerName $ComputerName -Quiet -Count 2 ) {
         $This.Path = "\\$Computername\admin$\System32\drivers\etc\hosts"
         $This.ComputerName = $Computername
