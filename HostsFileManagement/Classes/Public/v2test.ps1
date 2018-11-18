@@ -35,7 +35,6 @@ Class HostLine:TestEntry {
 Class EntryDescription{
     $Ipaddress
     $HostName
-    $FullQuallifiedName
     $Description
     $EntryType
     $Source
@@ -44,18 +43,27 @@ Class EntryDescription{
         $this.Source = $Line
         $this.EntryType = $EntryType
     }
+
+    EntryDescription(){}
 }
 
 Class CommentEntry : EntryDescription {
     
     CommentEntry($EntryType,$line):Base($EntryType,$line){}
+
+    CommentEntry($a):Base(){
+        $this.Description = $a
+        $this.EntryType = "Comment"
+    }
+
     [CommentEntry]ToObject(){
+        $this.Description = ($this.source.replace("#","")).trim()
         return $this
     }
 }
 
 Class BlankLineEntry : EntryDescription {
-    
+
     BlankLineEntry($EntryType,$line):Base($EntryType,$line){}
     [BlankLineEntry]ToObject(){
         return $this
@@ -65,49 +73,87 @@ Class BlankLineEntry : EntryDescription {
 Class HostEntry : EntryDescription {
     
     HostEntry($EntryType,$line):Base($EntryType,$line){}
+
+    HostEntry($a,$b,$c):Base(){
+        $this.Ipaddress = $a
+        $this.HostName = $b
+        $this.Description = $c
+        $this.EntryType = "HostEntry"
+    }
+
     [HostEntry]ToObject(){
-        $this.Ipaddress
-        $this.HostName
-        $this.FullQuallifiedName
-        $this.Description
+        $this.source -match "^(?<IpAddress>(\d{1,3}\.){3}\d{1,3})\s+(?<Hostname>([aA-zZ\.]+))\s+#(?<Description>(.+))"
+        $this.Ipaddress = $matches.IpAddress
+        $this.HostName = $matches.Hostname
+        $this.Description = ($matches.Description).Trim()
         return $this
     }
+
 }
 
 Class FileContent {
     $Path
+    $Content
 
     FileContent ($FilePath) {
         $This.Path = $FilePath
     }
 
+    FileContent(){}
+
     [String[]]RetunrFileContent(){
-        Return $(Get-Content -Path $This.Path)
+        $this.Content = $(Get-Content -Path $This.Path)
+        Return $this.Content
+    }
+
+    BackupFile($BackupPath){
+        $this.Content | Out-File -FilePath $BackupPath
     }
 }
 
 Class TransfromToObject : FileContent {
+    $FileAsBojects
 
     TransfromToObject ($FilePath):Base($FilePath){}
 
-    [Object[]]TestLines(){
-        $zou=@()
+    ConvertToObject(){
+        $zou = new-object -TypeName System.Collections.ArrayList
         Foreach ( $line in ($This.RetunrFileContent()) ) {
+
             If ( [Comment]::new($line).TestLine() ) {
-                Write-Host "Comment $line"
-                $zou+=([CommentEntry]::new("Comment",$line)).ToObject()
+                $zou.add(([CommentEntry]::new("CommentEntry",$line)).ToObject())
             }
 
             If ( [BlankLine]::new($line).TestLine() ) {
-                Write-Host "BlankLine $line"
+                $zou.add(([BlankLineEntry]::new("BlankEntry",$line)).ToObject())
             }
 
             If ( [HostLine]::new($line).TestLine() ) {
-                Write-Host "HostLine $line"
+                $zou.add(([HostEntry]::new("HostEntry",$line)).ToObject())
             }
+
         }
-        return $zou
+        $this.FileAsBojects = $zou
+        #return $zou
+    }
+
+    AddEntry([HostEntry]$a) {
+        write-host "hostentry"
+        $this.FileAsBojects.Add($a)
+    }
+
+    AddEntry([CommentEntry]$a) {
+        write-host "commententry"
+        $this.FileAsBojects.Add($a)
+    }
+
+    AddEntry([BlankLineEntry]$a) {
+        write-host "blanklineentry"
+        $this.FileAsBojects.Add($a)
     }
 }
 
-#[ParsedFile]::new('C:\Windows\System32\drivers\etc\hosts').TestLines()
+
+#$x = [TransfromToObject]::new('C:\Windows\System32\drivers\etc\hosts')
+#$z = $x.ConvertToObject()
+#$z.add()
