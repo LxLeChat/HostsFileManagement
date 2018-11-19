@@ -1,3 +1,4 @@
+## décrit un test
 Class TestEntry {
     $Entry
     TestEntry($line){
@@ -32,9 +33,11 @@ Class HostLine:TestEntry {
     }
 }
 
+##décrit une entrée
 Class EntryDescription{
     $Ipaddress
     $HostName
+    $FqDn
     $Description
     $EntryType
     $Source
@@ -47,6 +50,7 @@ Class EntryDescription{
     EntryDescription(){}
 }
 
+## entrée de type comment
 Class CommentEntry : EntryDescription {
     
     CommentEntry($EntryType,$line):Base($EntryType,$line){}
@@ -62,6 +66,7 @@ Class CommentEntry : EntryDescription {
     }
 }
 
+## entrée de type blankline
 Class BlankLineEntry : EntryDescription {
 
     BlankLineEntry($EntryType,$line):Base($EntryType,$line){}
@@ -70,27 +75,31 @@ Class BlankLineEntry : EntryDescription {
     }
 }
 
+## entrée de type host
 Class HostEntry : EntryDescription {
     
     HostEntry($EntryType,$line):Base($EntryType,$line){}
 
-    HostEntry($a,$b,$c):Base(){
+    HostEntry($a,$b,$c,$d):Base(){
         $this.Ipaddress = $a
         $this.HostName = $b
-        $this.Description = $c
+        $this.Fqdn = $c
+        $this.Description = $d
         $this.EntryType = "HostEntry"
     }
 
     [HostEntry]ToObject(){
-        $this.source -match "^(?<IpAddress>(\d{1,3}\.){3}\d{1,3})\s+(?<Hostname>([aA-zZ\.]+))\s+#(?<Description>(.+))"
-        $this.Ipaddress = $matches.IpAddress
-        $this.HostName = $matches.Hostname
-        $this.Description = ($matches.Description).Trim()
+        $this.source -match "^(?<IpAddress>(\d{1,3}\.){3}\d{1,3})\s+(?<Hostname>([aA-zZ\d\.]+))\s+(?<fqdn>([aA-zZ\d\.]+))?\s*#?(?<Description>(.+))?"
+        If ( $null -ne $matches.IpAddress ) { $this.Ipaddress = $matches.IpAddress }
+        If ( $null -ne $matches.Hostname ) { $this.HostName = $matches.Hostname }
+        If ( $null -ne $matches.FqDn ) { $this.FqDn = $matches.FqDn }
+        If ( $null -ne $matches.Description ) { $this.Description = ($matches.Description).Trim() }
         return $this
     }
 
 }
 
+## décrit le contenu d"un fichier, retourne son contenu et le backup
 Class FileContent {
     $Path
     $Content
@@ -107,14 +116,18 @@ Class FileContent {
     }
 
     BackupFile($BackupPath){
-        $this.Content | Out-File -FilePath $BackupPath
+        Copy-Item -Path $this.Path -Destination $BackupPath
     }
+
 }
 
-Class TransfromToObject : FileContent {
+## extension, qui permet de transformer le contenu du fichier en objet
+## ajouter des entrée à l objet
+## sauvegarder l objet
+Class HostFileToObject : FileContent {
     $FileAsBojects
 
-    TransfromToObject ($FilePath):Base($FilePath){}
+    HostFileToObject ($FilePath):Base($FilePath){}
 
     ConvertToObject(){
         $zou = new-object -TypeName System.Collections.ArrayList
@@ -134,22 +147,25 @@ Class TransfromToObject : FileContent {
 
         }
         $this.FileAsBojects = $zou
-        #return $zou
     }
 
     AddEntry([HostEntry]$a) {
-        write-host "hostentry"
+        write-host "Add hostentry"
         $this.FileAsBojects.Add($a)
     }
 
     AddEntry([CommentEntry]$a) {
-        write-host "commententry"
+        write-host "Add commententry"
         $this.FileAsBojects.Add($a)
     }
 
     AddEntry([BlankLineEntry]$a) {
-        write-host "blanklineentry"
+        write-host "Add blanklineentry"
         $this.FileAsBojects.Add($a)
+    }
+
+    SaveFile(){
+        $this.Content | Out-File -FilePath $this.Path
     }
 }
 
