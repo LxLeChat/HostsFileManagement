@@ -82,6 +82,9 @@ Function Get-HFMHostsfile {
                     } Else {
                         $ClassParams.Path = (Get-Item (Resolve-Path $P).Path).FullName
                     }
+
+                    $RemoteHostFile.ReadHostsFileContent($ClassParams.Path)
+                    return $RemoteHostFile.GetEntries()
                 }
 
             }
