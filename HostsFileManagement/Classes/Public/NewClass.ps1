@@ -35,7 +35,7 @@ Class ReturnEntryType {
              }
 
             '^#' {
-                $t = [HostEntry]::new([HostEntryType]::Comment,'','','',($x -replace '^#','').trim())
+                $t = [HostEntry]::new([HostEntryType]::CommentLine,'','','',($x -replace '^#','').trim())
                 Break;
             }
 
@@ -46,7 +46,7 @@ Class ReturnEntryType {
                 If ( $null -ne $matches.Hostname ) { $HostName = $matches.Hostname }
                 If ( $null -ne $matches.FqDn ) { $FqDn = $matches.FqDn }
                 If ( $null -ne $matches.Description ) { $Description = ($matches.Description).Trim() }
-                $t = [HostEntry]::new([HostEntryType]::Host,$Ipaddress,$HostName,$FqDn,$Description)
+                $t = [HostEntry]::new([HostEntryType]::HostLine,$Ipaddress,$HostName,$FqDn,$Description)
                 Break;
             }
 
@@ -54,6 +54,22 @@ Class ReturnEntryType {
         return $t
     }
 
+}
+
+Class ReturnLine {
+
+    Static [string]ConvertToLine ([HostEntry]$x) {
+        $c = ""
+        Switch ($x.EntryType) {
+
+            "BlankLine" {}
+            "CommentLine" {}
+            "HostLine" {}
+
+        }
+
+        return $c
+    }
 }
 
 Class HostFile {
@@ -73,7 +89,11 @@ Class HostFile {
         Return $this.Entry
     }
 
-    Save () {}
+    Save ($path) {
+        
+        $this.Entry
+    
+    }
 
     AddEntry () {}
 
@@ -83,3 +103,8 @@ Class HostFile {
 ## utilisation d'un prédicat....
 ## https://www.automatedops.com/blog/2017/02/06/working-with-the-collection-extension-methods-2-of-3/
 #$file.Entry.FindAll({param($s) $s.Hostnme -eq 'dc01'})
+
+
+$file = [HostFile]::new('C:\temp\hosts.txt')
+$file.Parse()
+[returnline]::ConvertToLine($file.Entry[0])
