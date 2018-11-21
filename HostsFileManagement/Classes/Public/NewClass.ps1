@@ -62,9 +62,22 @@ Class ReturnLine {
         $c = ""
         Switch ($x.EntryType) {
 
-            "BlankLine" {}
-            "CommentLine" {}
-            "HostLine" {}
+            "BlankLine" {
+                $c = ""
+                Break;
+            }
+
+            "CommentLine" {
+                $c = "#" + $x.Description
+                Break;
+            }
+
+            "HostLine" {
+                $c = $x.IpAddress + " " + $x.Hostname
+                If ( $x.FqDN ) { $c = $c + " " + $x.FqDN }
+                If ( $x.Description ) { $c = $c + " #" + $x.description }
+                Break; 
+            }
 
         }
 
@@ -91,7 +104,17 @@ Class HostFile {
 
     Save ($path) {
         
-        $this.Entry
+        Foreach ( $entry in $this.Entry ) {
+            [returnline]::ConvertToLine($entry) | out-file -FilePath $path -Append
+        }
+    
+    }
+
+    Save ($path,$stamp) {
+        
+        Foreach ( $entry in $this.Entry ) {
+            [returnline]::ConvertToLine($entry) | out-file -FilePath $path -Append
+        }
     
     }
 
@@ -107,4 +130,5 @@ Class HostFile {
 
 $file = [HostFile]::new('C:\temp\hosts.txt')
 $file.Parse()
-[returnline]::ConvertToLine($file.Entry[0])
+#[returnline]::ConvertToLine($file.Entry[0]) | Out-File c:\temp\hosts2.txt
+$file.Save('c:\temp\host2.txt')
