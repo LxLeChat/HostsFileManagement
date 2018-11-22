@@ -108,10 +108,6 @@ Class HostFile {
 
     }
 
-    [HostEntry[]]GetByEntryType ([HostEntryType]$a) {
-        return $this.Entry.Where({$_.EntryType -eq $a})
-    }
-
 }
 
 
