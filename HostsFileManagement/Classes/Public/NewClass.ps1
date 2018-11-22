@@ -1,4 +1,3 @@
-
 Enum HostEntryType{
     HostLine
     CommentLine
@@ -110,15 +109,13 @@ Class HostFile {
     
     }
 
-    Save ($path,$stamp) {
-        
-        Foreach ( $entry in $this.Entry ) {
-            [returnline]::ConvertToLine($entry) | out-file -FilePath $path -Append
-        }
-    
-    }
+    AddEntry ([HostEntry[]]$a) {
 
-    AddEntry () {}
+        Foreach ( $e in $a ) {
+            $this.Entry.add($e)
+        }
+
+    }
 
 }
 
@@ -128,7 +125,21 @@ Class HostFile {
 #$file.Entry.FindAll({param($s) $s.Hostnme -eq 'dc01'})
 
 
+<#
 $file = [HostFile]::new('C:\temp\hosts.txt')
 $file.Parse()
 #[returnline]::ConvertToLine($file.Entry[0]) | Out-File c:\temp\hosts2.txt
 $file.Save('c:\temp\host2.txt')
+
+
+[HostEntry[]]$array = @(
+    [HostEntry]::new([HostEntryType]::BlankLine,'','','',''),
+    [HostEntry]::new([HostEntryType]::CommentLine,'','','','BEGIN New bloc entries'),
+    [HostEntry]::new([HostEntryType]::HostLine,'127.0.0.10','tata','','new line tata'),
+    [HostEntry]::new([HostEntryType]::HostLine,'127.0.0.11','tete','','new line tete'),
+    [HostEntry]::new([HostEntryType]::HostLine,'127.0.0.12','titi','','new line titi'),
+    [HostEntry]::new([HostEntryType]::CommentLine,'','','','END New bloc entries')
+)
+
+$file.AddEntry($array)
+#>
