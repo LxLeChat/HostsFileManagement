@@ -108,6 +108,10 @@ Class HostFile {
 
     }
 
+    [HostEntry[]]GetByEntryType ([HostEntryType]$a) {
+        return $this.Entry.Where({$_.EntryType -eq $a})
+    }
+
 }
 
 
@@ -133,4 +137,5 @@ $file.Save('c:\temp\host2.txt')
 )
 
 $file.AddEntry($array)
+$File.GetEntryByType([HostEntryType]::HostLine)
 #>
